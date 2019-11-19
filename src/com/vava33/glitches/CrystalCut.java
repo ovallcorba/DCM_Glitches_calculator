@@ -1,5 +1,4 @@
 package com.vava33.glitches;
-
 /**
  * 
  * @author Oriol Vallcorba
@@ -7,13 +6,18 @@ package com.vava33.glitches;
  * 
  */
 
+import com.vava33.cellsymm.Cell;
 import com.vava33.cellsymm.HKLrefl;
 
 public interface CrystalCut {
 
-    public Spagetti calcSpagetti(int maxIndex, double azimIniDeg, double azimFinDeg, double azimStep, double eKevMin, double eKevMax);
     public String getName();
-    public HKLrefl getHKLreflPlane();
-    
+    public double calcThetaRefl(int h, int k, int l, double azimangleRad);
+    public double getEnergyKeV(double thetaRad);
+    public Cell getCell();
+    public int getHref();
+    public int getKref();
+    public int getLref();
+    public double calcDwidth(double wave, HKLrefl hkl, double tthrad);
     
 }

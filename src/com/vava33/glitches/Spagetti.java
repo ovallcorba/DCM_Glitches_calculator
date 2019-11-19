@@ -8,8 +8,11 @@ package com.vava33.glitches;
  */
 
 import java.util.ArrayList;
-
+import java.util.Collections;
+import java.util.List;
 import org.apache.commons.math3.util.FastMath;
+
+import com.vava33.cellsymm.HKLrefl;
 import com.vava33.jutils.VavaLogger;
 import com.vava33.ovPlot.Plottable_point;
 
@@ -20,12 +23,15 @@ public class Spagetti {
     double minE,maxE,minAzim,maxAzim,deltaAzim;
     int maxHKLindex;
     CrystalCut crystal;
+    HKLrefl hkl_reflplane;
     static double stepEglitch = 0.001; //1eV
-    VavaLogger log = new VavaLogger("spagetti");
+    VavaLogger log = GlitchesMain.getVavaLogger("Spagetti");
+    //test:
+    ArrayList<Double> discreetValuesOfGlitches;
     
-    public Spagetti(String name, double minE, double maxE, double minAzim, double maxAzim, double deltaAzim, int maxHKLindex, CrystalCut crys) {
+    public Spagetti(CrystalCut crys, double minE, double maxE, double minAzim, double maxAzim, double deltaAzim, int maxHKLindex) {
         series = new ArrayList<SpagettiHKLserie>();
-        this.name=name;
+        this.name=crys.getName();
         this.minE=minE;
         this.maxE=maxE;
         this.minAzim=minAzim;
@@ -33,7 +39,8 @@ public class Spagetti {
         this.deltaAzim=deltaAzim;
         this.maxHKLindex=maxHKLindex;
         this.crystal=crys;
-        log.enableLogger();
+        this.calcSpagetti();
+        this.discreetValuesOfGlitches=new ArrayList<Double>();
     }
 
     public void addSerie(SpagettiHKLserie spHKL) {
@@ -48,13 +55,54 @@ public class Spagetti {
         return this.series.size();
     }
     
+    public double calcQmaxFromHKLmax(int hklmaxIndex) {
+        double dsp = crystal.getCell().calcDspHKL(hklmaxIndex, hklmaxIndex, hklmaxIndex);
+        return 1/(dsp*dsp);
+    }
+    
+    public void calcSpagetti() {
+        List<HKLrefl> listhkl = crystal.getCell().generateHKLsCrystalFamily(calcQmaxFromHKLmax(maxHKLindex), true,true,true,true,true);
+        crystal.getCell().calcInten(true,false);
+        
+        for (HKLrefl hkl: listhkl) {
+            if (FastMath.abs(hkl.getH())>maxHKLindex)continue;
+            if (FastMath.abs(hkl.getK())>maxHKLindex)continue;
+            if (FastMath.abs(hkl.getL())>maxHKLindex)continue;
+            if ((hkl.getH()==crystal.getHref())&&(hkl.getK()==crystal.getKref())&&(hkl.getL()==crystal.getLref())) {
+                hkl_reflplane = hkl;
+            }
+            
+            SpagettiHKLserie spHKL = new SpagettiHKLserie(hkl);
+            spHKL.setToleranceContinuous(2*deltaAzim);
+            double azim=minAzim;
+            while (azim<maxAzim) {
+                double thetaRad = crystal.calcThetaRefl(hkl.getH(), hkl.getK(), hkl.getL(), FastMath.toRadians(azim));
+                double ekev = crystal.getEnergyKeV(FastMath.abs(thetaRad));
+                if (Double.isFinite(ekev)) {
+                    if ((ekev<=maxE)&&(ekev>=minE)){
+                        double intenlor = hkl.getYcalc()*(1/(FastMath.sin(thetaRad*2)*FastMath.sin(thetaRad)));
+                        spHKL.addPoint(new Spoint(azim,ekev,intenlor,spHKL));
+                        
+                        //test
+                        double dwidth = crystal.calcDwidth(12.398/ekev,hkl,thetaRad*2);
+                        ((Spoint)(spHKL.getPoint(spHKL.getNPoints()-1))).dwidth=dwidth;
+                    }
+                }
+                azim=azim+deltaAzim;
+            }
+            if (spHKL.getNPoints()==0)continue;
+            this.addSerie(spHKL);
+        }
+    }
+    
     public GlitchSerie getGlitchCut(double azimValue, double fwhmKEV) {
+        discreetValuesOfGlitches.clear();
         
         GlitchSerie ser = new GlitchSerie(String.format("%s glitch pattern at azim=%.2fº (delta %.3f)", crystal.getName(),azimValue,deltaAzim));
         //intensitat de base
         double baseInt = 0;
-        if(crystal.getHKLreflPlane()!=null) {
-            baseInt = crystal.getHKLreflPlane().getYcalc();
+        if(this.hkl_reflplane!=null) {
+            baseInt = this.hkl_reflplane.getYcalc();
         }
         
         double currE=minE;
@@ -66,7 +114,6 @@ public class Spagetti {
         double minAz=azimValue-deltaAzim/2.;
         double maxAz=azimValue+deltaAzim/2.;
         int nfwhm = 30;
-        log.info("size="+ser.getNPoints());
         //ser ha de ser per tot el rang energetic, el fem segons azimDelta
         for (SpagettiHKLserie hkl :this.series) {
             //he de mirar cada spagetti serie a les azim [-delta, azim, +delta] quina E tenen i poblar el vector ser
@@ -81,12 +128,12 @@ public class Spagetti {
                         int pos = (int)((ekev-minE)/stepEglitch);
                         
                         //faig pseudovoigt centrada aqui
-                        fwhmKEV = ((Spoint)(sp)).dwidth;
-                        log.info(sp.getInfo()+" E(keV)="+ekev+" dwidth(fwhm keV)="+fwhmKEV);
+                        discreetValuesOfGlitches.add(ekev);
+                        if (fwhmKEV<0) {//darwin width
+                            fwhmKEV = ((Spoint)(sp)).dwidth/1000.;    
+                        }//otherwise we take directly the entered value
                         Lorentzian lor = new Lorentzian (ekev,fwhmKEV); 
                         int npunts = (int) ((fwhmKEV/(double)stepEglitch) * nfwhm/2.);
-                        
-                        log.infof("az=%.2f ekev=%.2f pos=%d npunts=%d",az,ekev,pos,npunts);
                         
                         for (int j=pos-npunts; j<pos+npunts-2; j++) {
                             if (j<0)continue;
@@ -102,6 +149,23 @@ public class Spagetti {
             }
         }
         
+        ArrayList<Double> cleanList = new ArrayList<Double>();
+        double tol = 0.0001; //0.1eV
+        for (Double d1: discreetValuesOfGlitches) {
+            boolean trobat = false;
+            for (Double d2:cleanList) {
+                if (FastMath.abs(d1-d2)<tol) {
+                    //son iguals
+                    trobat=true;
+                    break;
+                }
+            }
+            if (!trobat) {
+                cleanList.add(d1);
+            }
+        }
+        Collections.sort(cleanList);
+        discreetValuesOfGlitches=cleanList;
         return ser;
         
     }
@@ -118,4 +182,11 @@ public class Spagetti {
             return 2./FastMath.PI/(1+4*(x-mean)*(x-mean)/fwhm/fwhm);
         }
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s maxHKLindex=%d  ", crystal.getName(),maxHKLindex);
+    }
+    
+    
 }

@@ -11,8 +11,7 @@ import com.vava33.ovPlot.BasicPoint;
 
 public class Spoint extends BasicPoint{
 
-    public double dwidth=0.005; //TEMP
-    
+   
     public Spoint(double azim, double energyKeV, double intensity, SpagettiHKLserie parent) {
         super(azim,energyKeV,intensity,0,parent);
     }

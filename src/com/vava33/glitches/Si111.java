@@ -15,7 +15,6 @@ import org.apache.commons.math3.util.FastMath;
 import com.vava33.cellsymm.Atom;
 import com.vava33.cellsymm.Cell;
 import com.vava33.cellsymm.CellSymm_global;
-import com.vava33.cellsymm.HKLrefl;
 import com.vava33.jutils.VavaLogger;
 
 public class Si111 implements CrystalCut {
@@ -23,7 +22,7 @@ public class Si111 implements CrystalCut {
     static double sqrt3;
     static double sqrt2;
     static String name = "Si111";
-    static double d_si111_A = 3.1356;
+    static double dsp_hklref = 3.1356;
     static double si_cell_par_A = 5.43088;
     static int href=1;
     static int kref=1;
@@ -42,25 +41,6 @@ public class Si111 implements CrystalCut {
         c.setAtoms(cellContent);
     }
     
-    public double calcDwidth(double wave, HKLrefl hkl, double tthrad) {
-        double eradius = 2.8179403227e-15;//m
-        double atomicDensity = 5e25;// atoms/m3
-        double fh = FastMath.sqrt(hkl.getYcalc());
-        
-        double dwidth = (wave/2)*(wave/2)*eradius*2.12;
-        dwidth = dwidth * ((atomicDensity*fh)/(FastMath.PI*FastMath.sin(tthrad)));
-        
-        //1 arcsecond ≈ 4.85E-6 radians
-        dwidth = dwidth * 4.85e-6;
-        double thetaRad = tthrad/2;
-        
-        double elow = getEnergyKeV(thetaRad-dwidth/2);
-        double ehigh = getEnergyKeV(thetaRad+dwidth/2);
-        
-        return FastMath.abs(elow-ehigh); //darwin width in kev
-    }
-
-    
     public double calcQmaxFromHKLmax(int hklmaxIndex) {
         double dsp = c.calcDspHKL(hklmaxIndex, hklmaxIndex, hklmaxIndex);
         return 1/(dsp*dsp);
@@ -77,7 +57,7 @@ public class Si111 implements CrystalCut {
     @Override
     public double getEnergyKeV(double thetaRad) {
         //λ(A) = 12.398/E(keV).
-        double lambda = 2*d_si111_A*FastMath.sin(thetaRad);
+        double lambda = 2*dsp_hklref*FastMath.sin(thetaRad);
         return 12.398/lambda;
     }
 

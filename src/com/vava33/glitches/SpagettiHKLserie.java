@@ -23,5 +23,14 @@ public class SpagettiHKLserie extends BasicSerie{
         return hkl;
     }
 
-
+    public boolean isEqualTo(SpagettiHKLserie otherSpaghettiSerie) {
+        boolean iguals = true;
+        for (int i=0; i<this.getNPoints(); i++) {
+            if (this.getRawPoint(i).compareTo(otherSpaghettiSerie.getRawPoint(i))!=0) {
+                iguals=false;
+                break;
+            }
+        }
+        return iguals;
+    }
 }

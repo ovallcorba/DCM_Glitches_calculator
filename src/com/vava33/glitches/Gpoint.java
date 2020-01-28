@@ -7,7 +7,7 @@ package com.vava33.glitches;
  * 
  */
 
-import com.vava33.ovPlot.BasicPoint;
+import com.vava33.BasicPlotPanel.BasicPoint;
 
 public class Gpoint extends BasicPoint {
     

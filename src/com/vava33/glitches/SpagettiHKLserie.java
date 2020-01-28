@@ -7,10 +7,11 @@ package com.vava33.glitches;
  * 
  */
 
+import com.vava33.BasicPlotPanel.BasicPoint;
+import com.vava33.BasicPlotPanel.BasicSerie;
 import com.vava33.cellsymm.HKLrefl;
-import com.vava33.ovPlot.BasicSerie;
 
-public class SpagettiHKLserie extends BasicSerie{
+public class SpagettiHKLserie extends BasicSerie<BasicPoint>{
     
     private HKLrefl hkl;
 

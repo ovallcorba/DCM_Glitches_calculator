@@ -7,11 +7,10 @@ package com.vava33.glitches;
  * 
  */
 
-import com.vava33.ovPlot.BasicPoint;
+ import com.vava33.BasicPlotPanel.BasicPoint;
 
 public class Spoint extends BasicPoint{
 
-   
     public Spoint(double azim, double energyKeV, double intensity, SpagettiHKLserie parent) {
         super(azim,energyKeV,intensity,0,parent);
     }

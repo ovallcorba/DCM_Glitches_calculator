@@ -7,13 +7,14 @@ package com.vava33.glitches;
  * 
  */
 
-import com.vava33.ovPlot.BasicSerie;
-import com.vava33.ovPlot.SerieType;
+import com.vava33.BasicPlotPanel.BasicPoint;
+import com.vava33.BasicPlotPanel.BasicSerie;
+import com.vava33.BasicPlotPanel.core.SerieType;
 
-public class EdgeSerie extends BasicSerie{    
+public class EdgeSerie extends BasicSerie<BasicPoint>{    
     
     public EdgeSerie(String name) {
-        super(name,SerieType.vertical);
+        super(name,SerieType.ref);
     }
 
 }

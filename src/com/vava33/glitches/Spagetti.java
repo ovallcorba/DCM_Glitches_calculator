@@ -10,15 +10,17 @@ package com.vava33.glitches;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 import org.apache.commons.math3.util.FastMath;
 
+import com.vava33.BasicPlotPanel.BasicDataToPlot;
+import com.vava33.BasicPlotPanel.core.Plottable_point;
 import com.vava33.cellsymm.HKLrefl;
 import com.vava33.jutils.VavaLogger;
-import com.vava33.ovPlot.Plottable_point;
 
-public class Spagetti {
+public class Spagetti extends BasicDataToPlot<SpagettiHKLserie> {
 
-    ArrayList<SpagettiHKLserie> series;
+    
     String name;
     double minE,maxE,minAzim,maxAzim,stepSizeAzim;
     int maxHKLindex;
@@ -29,8 +31,13 @@ public class Spagetti {
     VavaLogger log = GlitchesMain.getVavaLogger("Spagetti");
     //test:
     
-    public Spagetti(CrystalCut crys, double minE, double maxE, double minAzim, double maxAzim, double stepAzim, int maxHKLindex) {
-        series = new ArrayList<SpagettiHKLserie>();
+    public Spagetti() {
+        super(); //ja inicia arraylists i taula
+    }
+    
+    public void setSpagetti(CrystalCut crys, double minE, double maxE, double minAzim, double maxAzim, double stepAzim, int maxHKLindex) {
+        series.clear();
+        selectedSeries.clear();
         this.name=crys.getName();
         this.minE=minE;
         this.maxE=maxE;
@@ -41,18 +48,6 @@ public class Spagetti {
         this.crystal=crys;
         this.calcSpagetti();
     }
-
-    public void addSerie(SpagettiHKLserie spHKL) {
-        this.series.add(spHKL);
-    }
-
-    public SpagettiHKLserie getSerie(int i) {
-        return this.series.get(i);
-    }
-    
-    public int getNseries() {
-        return this.series.size();
-    }
     
     public double calcQmaxFromHKLmax(int hklmaxIndex) {
         double dsp = crystal.getCell().calcDspHKL(hklmaxIndex, hklmaxIndex, hklmaxIndex);
@@ -61,6 +56,7 @@ public class Spagetti {
     
     public void calcSpagetti() {
         List<HKLrefl> listhkl = crystal.getCell().generateHKLsCrystalFamily(calcQmaxFromHKLmax(maxHKLindex), true,true,true,true,true);
+        
         crystal.getCell().calcInten(true,false);
         
         for (HKLrefl hkl: listhkl) {
@@ -90,19 +86,19 @@ public class Spagetti {
         }
         
         //mirem quines series coincideixen i posar un offset al nom... //TODO millorable
-        for (int i=0;i<this.getNseries();i++) {
+        for (int i=0;i<this.getNPlottables();i++) {
             SpagettiHKLserie s = this.getSerie(i);
-            for (int j=i+1;j<this.getNseries();j++) {
+            for (int j=i+1;j<this.getNPlottables();j++) {
                 SpagettiHKLserie s2 = this.getSerie(j);                
                 if (s.isEqualTo(s2)) {
                     s2.setName("            "+s2.getName());
                 }
             }
         }
-
+        
     }
     
- 
+    
     /*
      * A cada linia que passa per la E que estem mirant hem de considerar un FWHM(keV) 
      * tal que agafi com a Emin = E(azim-fwhmDAzim/2) i Emax= E(azim+fwhmDAzim/2)
@@ -168,7 +164,7 @@ public class Spagetti {
                             fwhmKEV=minFWHM;
                         }
                         
-                       
+                        
                         //faig pseudovoigt centrada aqui
                         discreetValuesOfGlitches.add(ekev);
                         Lorentzian lor = new Lorentzian (ekev,fwhmKEV); 
@@ -234,6 +230,6 @@ public class Spagetti {
     public String toString() {
         return String.format("%s maxHKLindex=%d  ", crystal.getName(),maxHKLindex);
     }
-    
-    
 }
+
+

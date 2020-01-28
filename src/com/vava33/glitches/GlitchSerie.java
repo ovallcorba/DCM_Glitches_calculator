@@ -1,4 +1,5 @@
 package com.vava33.glitches;
+
 /**
  * 
  * @author Oriol Vallcorba
@@ -6,11 +7,17 @@ package com.vava33.glitches;
  * 
  */
 
-import com.vava33.ovPlot.BasicSerie;
+import java.util.ArrayList;
 
-public class GlitchSerie extends BasicSerie{
+import com.vava33.BasicPlotPanel.BasicPoint;
+import com.vava33.BasicPlotPanel.BasicSerie;
+
+public class GlitchSerie extends BasicSerie<BasicPoint>{
+    
+    ArrayList<Double> discreetValuesOfGlitches;
     
     public GlitchSerie(String name) {
         super(name);
+        discreetValuesOfGlitches =new ArrayList<Double>();
     }
 }

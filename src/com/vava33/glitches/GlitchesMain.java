@@ -35,10 +35,12 @@ import javax.swing.UIManager;
 
 import com.vava33.jutils.FileUtils;
 import com.vava33.jutils.VavaLogger;
-import com.vava33.ovPlot.BasicPlotPanel;
-import com.vava33.ovPlot.Plottable;
-import com.vava33.ovPlot.Plottable_point;
-import com.vava33.ovPlot.SerieType;
+import com.vava33.BasicPlotPanel.BasicPlot1DPanel;
+import com.vava33.BasicPlotPanel.BasicPlotPanelFrontEnd;
+import com.vava33.BasicPlotPanel.BasicPoint;
+import com.vava33.BasicPlotPanel.BasicSerie;
+import com.vava33.BasicPlotPanel.core.Plottable_point;
+import com.vava33.BasicPlotPanel.core.SerieType;
 
 import net.miginfocom.swing.MigLayout;
 import javax.swing.JPanel;
@@ -106,7 +108,6 @@ public class GlitchesMain {
     }
     
     public JFrame mainFrame;
-    BasicPlotPanel spagettiPlot;
     private JTextField txtMinE;
     private JTextField txtMaxE;
     private JTextField txtMinazim;
@@ -114,12 +115,14 @@ public class GlitchesMain {
     private JTextField texthklmax;
     private JTextField txtAzimGlitch;
     private JComboBox<String> comboSi;
-    Spagetti currentSpagetti; 
     private JTable table;
     private JLabel lblGenerated;
     private JTextField txtFwhm;
     private LogJTextArea tAOut;
     
+    Spagetti currentSpagetti; //current Spagetti    
+    BasicPlotPanelFrontEnd<BasicPlot1DPanel> spagettiPlot;
+
     private static final double def_stepSizeAzim=0.02; //deg
     
     
@@ -170,6 +173,8 @@ public class GlitchesMain {
     }
     
     public GlitchesMain() {
+        currentSpagetti=new Spagetti();
+        spagettiPlot = new BasicPlotPanelFrontEnd<BasicPlot1DPanel>(null,new BasicPlot1DPanel(currentSpagetti,log),log); //TODO afegir currentSpagetti pero amb inicialitzacio anterior
         initialize();
         this.spagettiPlot.showHideButtonsPanel();//amagara el menu lateral
     }
@@ -194,8 +199,6 @@ public class GlitchesMain {
         JPanel panelTop = new JPanel();
         splitPane.setLeftComponent(panelTop);
         panelTop.setLayout(new MigLayout("", "[grow]", "[][grow]"));
-
-        spagettiPlot = new BasicPlotPanel(null);
 
         panelTop.add(spagettiPlot,"cell 0 1, grow");
         
@@ -304,7 +307,7 @@ public class GlitchesMain {
         splitPane2.setRightComponent(scrollPane);
         splitPane.setRightComponent(splitPane2);
         
-        table = spagettiPlot.getTablePlottables();
+        table = currentSpagetti.getTablePatterns();
         scrollPaneTable.setViewportView(table);
         
         JMenuBar menuBar = new JMenuBar();
@@ -352,7 +355,6 @@ public class GlitchesMain {
     private void inicia() {
 
         if (logTA)VavaLogger.setTArea(tAOut);
-        BasicPlotPanel.setVavaLogger(GlitchesMain.getVavaLogger("Glitches_PlotPanel"));
         log.info(welcomeMSG);
         mainFrame.setIconImage(getIcon());
 
@@ -366,14 +368,14 @@ public class GlitchesMain {
             mainFrame.setSize(mainFrame.getWidth(), mainFrame.getHeight()-100);
         }
 
-        spagettiPlot.setShowLegend(false);
-        spagettiPlot.setLightTheme(false);
+        spagettiPlot.getGraphPanel().setShowLegend(false);
+        spagettiPlot.getGraphPanel().setLightTheme(false);
         
     }
     
     protected void do_btnShowOrientation_actionPerformed(ActionEvent e) {
         JDialog dialog = new JDialog();
-        Image ii = new ImageIcon(BasicPlotPanel.class.getResource("/com/vava33/glitches/axis.png")).getImage().getScaledInstance(-100, 500, java.awt.Image.SCALE_SMOOTH);
+        Image ii = new ImageIcon(BasicPlotPanelFrontEnd.class.getResource("/com/vava33/glitches/axis.png")).getImage().getScaledInstance(-100, 500, java.awt.Image.SCALE_SMOOTH);
         JLabel label = new JLabel(new ImageIcon(ii));
         dialog.getContentPane().add( label );
         dialog.pack();
@@ -392,10 +394,10 @@ public class GlitchesMain {
 
         switch (plane) {
         case 0://si111
-            currentSpagetti=new Spagetti(new Si111(),minE,maxE, minAzim, maxAzim, def_stepSizeAzim,hklMax);
+            currentSpagetti.setSpagetti(new Si111(),minE,maxE, minAzim, maxAzim, def_stepSizeAzim,hklMax);
             break;
         case 1://si220;
-            currentSpagetti=new Spagetti(new Si220(),minE,maxE, minAzim, maxAzim, def_stepSizeAzim,hklMax);
+            currentSpagetti.setSpagetti(new Si220(),minE,maxE, minAzim, maxAzim, def_stepSizeAzim,hklMax);
             break;
         }
         
@@ -404,13 +406,9 @@ public class GlitchesMain {
     }
     
     private void plot(Spagetti s) {
-        spagettiPlot.removeAllPlottables();
-        spagettiPlot.setXlabel("Azimuthal angle (º)");
-        spagettiPlot.setYlabel("Energy (keV)");
-        for (int i=0;i<s.getNseries();i++) {
-            spagettiPlot.addPlottable(s.getSerie(i),false,true);    
-        }
-        spagettiPlot.actualitzaPlot();
+        spagettiPlot.getGraphPanel().setXlabel("Azimuthal angle (º)");
+        spagettiPlot.getGraphPanel().setYlabel("Energy (keV)");
+
     }
 
     
@@ -429,16 +427,16 @@ public class GlitchesMain {
             GlitchSerie ser = currentSpagetti.getGlitchCut2(azim,fwhm);
             
             if (gPattFrame!=null) {
-                if (gPattFrame.isVisible()) {
+                if (gPattFrame.getGlitchPattFrame().isVisible()) {
                     //ask if add to current Glitch pattern
                     boolean yes = FileUtils.YesNoDialog(this.mainFrame, "Add to current Glitch Pattern?", "Add to existing plot");
                     if (yes) {
                         //L'afegim per sobre les verticals (edges)
-                        int pos = gPattFrame.getPlotPanel().getNplottablesOfSerieTypes(false, SerieType.xy);
-                        gPattFrame.getPlotPanel().addPlottable(ser, pos, true,true);
-                        gPattFrame.getPlotPanel().setPlotTitle("");
-                        gPattFrame.getPlotPanel().setShowLegend(true);
-                        gPattFrame.setTitle("Glitch patterns");
+                        int pos = gPattFrame.getNplottablesOfSerieTypes(false, SerieType.dat);
+                        gPattFrame.addSerie(ser, pos, true,true);
+                        gPattFrame.getPlotPanel().getGraphPanel().setPlotTitle("");
+                        gPattFrame.getPlotPanel().getGraphPanel().setShowLegend(true);
+                        gPattFrame.getGlitchPattFrame().setTitle("Glitch patterns");
                         return;
                     }else {
 //                        gPattFrame.dispose();
@@ -447,11 +445,10 @@ public class GlitchesMain {
             }
             //si estem aqui o bé es el primer que generem o be no volem afegir-lo a l'actual
             gPattFrame = new GlitchPatternFrame();
-            gPattFrame.getPlotPanel().addPlottable(ser,true,true);
-            gPattFrame.getPlotPanel().setShowLegend(false);
-            gPattFrame.getPlotPanel().setPlotTitle(ser.getName());
-            gPattFrame.setTitle(ser.getName());
-            gPattFrame.setVisible(true);
+            gPattFrame.addSerie(ser,true,true);
+            gPattFrame.getGlitchPattFrame().setTitle(ser.getName());
+            gPattFrame.getGlitchPattFrame().setVisible(true);
+            gPattFrame.getPlotPanel().getGraphPanel().setPlotTitle(ser.getName()); //ho podria fer glitchPatternFrame
         }
         
         
@@ -484,7 +481,7 @@ public class GlitchesMain {
     }
     
     private void savePNG(File fpng, float factor){
-        if (!spagettiPlot.arePlottables())return;
+        if (!spagettiPlot.getGraphPanel().arePlottables())return;
         try {
             ImageIO.write(spagettiPlot.getGraphPanel().pintaPatterns(factor), "png", fpng);
         } catch (Exception ex) {
@@ -495,9 +492,9 @@ public class GlitchesMain {
     }
     
     protected void do_mntmExportMulticolumnFile_actionPerformed(ActionEvent e) {
-        if (spagettiPlot.getTablePlottables().getRowCount()<=0)return;
+        if (currentSpagetti.getTablePatterns().getRowCount()<=0)return;
 
-        List<Plottable> dss = spagettiPlot.getAllPlottables();
+        List<SpagettiHKLserie> dss = currentSpagetti.getPlottables();
 
         if (dss.size()==1) {
             //normal save
@@ -529,7 +526,7 @@ public class GlitchesMain {
     }
     
     
-    private boolean writeDAT(Plottable ds, File outf, boolean overwrite){
+    private boolean writeDAT(BasicSerie<BasicPoint> ds, File outf, boolean overwrite){
         if (outf.exists()&&!overwrite)return false;
         if (outf.exists()&&overwrite)outf.delete();
         
@@ -542,7 +539,7 @@ public class GlitchesMain {
             out.println("# "+currentSpagetti.toString());
             
             for (int i=0; i<ds.getNPoints();i++){
-                Plottable_point pp = ds.getCorrectedPoint(i);
+                Plottable_point pp = ds.getCorrectedPoint(i,false);
                 String towrite = String.format(" %10.7e  %10.7e",pp.getX(),pp.getY());
                 towrite = towrite.replace(",", ".");
                 out.println(towrite);
@@ -557,7 +554,7 @@ public class GlitchesMain {
         return written;
     }
     
-    public boolean writeMDAT(List<Plottable> dss, File outf, boolean overwrite){
+    public boolean writeMDAT(List<? extends BasicSerie<BasicPoint>> dss, File outf, boolean overwrite){
         if (outf.exists()&&!overwrite)return false;
         if (outf.exists()&&overwrite)outf.delete();
         
@@ -578,8 +575,9 @@ public class GlitchesMain {
             while (azim<currentSpagetti.maxAzim) {
                 StringBuilder line = new StringBuilder();
                     line.append(String.format("%12.5e,",azim));    
-                for (Plottable p:dss) {
-                    Plottable_point pp = p.getPoint(azim,tol);
+
+                for (BasicSerie<BasicPoint> p:dss) {
+                    Plottable_point pp = p.getClosestPointX(azim,tol);
                     if (pp!=null) {
                         line.append(String.format("%12.5e,",pp.getY()));    
                     }else {

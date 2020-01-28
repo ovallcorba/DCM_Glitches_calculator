@@ -120,8 +120,8 @@ public class GlitchesMain {
     private JTextField txtFwhm;
     private LogJTextArea tAOut;
     
-    Spagetti currentSpagetti; //current Spagetti    
-    BasicPlotPanelFrontEnd<BasicPlot1DPanel> spagettiPlot;
+    Spaghetti currentspaghetti; //current spaghetti    
+    BasicPlotPanelFrontEnd<BasicPlot1DPanel> spaghettiPlot;
 
     private static final double def_stepSizeAzim=0.02; //deg
     
@@ -173,10 +173,10 @@ public class GlitchesMain {
     }
     
     public GlitchesMain() {
-        currentSpagetti=new Spagetti();
-        spagettiPlot = new BasicPlotPanelFrontEnd<BasicPlot1DPanel>(null,new BasicPlot1DPanel(currentSpagetti,log),log); //TODO afegir currentSpagetti pero amb inicialitzacio anterior
+        currentspaghetti=new Spaghetti();
+        spaghettiPlot = new BasicPlotPanelFrontEnd<BasicPlot1DPanel>(null,new BasicPlot1DPanel(currentspaghetti,log),log); //TODO afegir currentspaghetti pero amb inicialitzacio anterior
         initialize();
-        this.spagettiPlot.showHideButtonsPanel();//amagara el menu lateral
+        this.spaghettiPlot.showHideButtonsPanel();//amagara el menu lateral
     }
 
     private void initialize() {
@@ -200,7 +200,7 @@ public class GlitchesMain {
         splitPane.setLeftComponent(panelTop);
         panelTop.setLayout(new MigLayout("", "[grow]", "[][grow]"));
 
-        panelTop.add(spagettiPlot,"cell 0 1, grow");
+        panelTop.add(spaghettiPlot,"cell 0 1, grow");
         
         JPanel panelOpts = new JPanel();
         panelTop.add(panelOpts, "cell 0 0, grow");
@@ -307,7 +307,7 @@ public class GlitchesMain {
         splitPane2.setRightComponent(scrollPane);
         splitPane.setRightComponent(splitPane2);
         
-        table = currentSpagetti.getTablePatterns();
+        table = currentspaghetti.getTablePatterns();
         scrollPaneTable.setViewportView(table);
         
         JMenuBar menuBar = new JMenuBar();
@@ -368,8 +368,8 @@ public class GlitchesMain {
             mainFrame.setSize(mainFrame.getWidth(), mainFrame.getHeight()-100);
         }
 
-        spagettiPlot.getGraphPanel().setShowLegend(false);
-        spagettiPlot.getGraphPanel().setLightTheme(false);
+        spaghettiPlot.getGraphPanel().setShowLegend(false);
+        spaghettiPlot.getGraphPanel().setLightTheme(false);
         
     }
     
@@ -394,27 +394,27 @@ public class GlitchesMain {
 
         switch (plane) {
         case 0://si111
-            currentSpagetti.setSpagetti(new Si111(),minE,maxE, minAzim, maxAzim, def_stepSizeAzim,hklMax);
+            currentspaghetti.setspaghetti(new Si111(),minE,maxE, minAzim, maxAzim, def_stepSizeAzim,hklMax);
             break;
         case 1://si220;
-            currentSpagetti.setSpagetti(new Si220(),minE,maxE, minAzim, maxAzim, def_stepSizeAzim,hklMax);
+            currentspaghetti.setspaghetti(new Si220(),minE,maxE, minAzim, maxAzim, def_stepSizeAzim,hklMax);
             break;
         }
         
-        this.plot(currentSpagetti);
-        lblGenerated.setText(String.format("Spaghetti plot for %s",currentSpagetti.crystal.getName()));
+        this.plot(currentspaghetti);
+        lblGenerated.setText(String.format("Spaghetti plot for %s",currentspaghetti.crystal.getName()));
     }
     
-    private void plot(Spagetti s) {
-        spagettiPlot.getGraphPanel().setXlabel("Azimuthal angle (º)");
-        spagettiPlot.getGraphPanel().setYlabel("Energy (keV)");
+    private void plot(Spaghetti s) {
+        spaghettiPlot.getGraphPanel().setXlabel("Azimuthal angle (º)");
+        spaghettiPlot.getGraphPanel().setYlabel("Energy (keV)");
 
     }
 
     
     protected void do_btnGenerate_1_actionPerformed(ActionEvent e) {
         
-        if (currentSpagetti!=null) {
+        if (currentspaghetti!=null) {
             
             double azim = Double.parseDouble(txtAzimGlitch.getText());
             double fwhm = Double.parseDouble(txtFwhm.getText()); //azimuthal "aperture" in degrees
@@ -424,7 +424,7 @@ public class GlitchesMain {
                 txtFwhm.setText(String.format("%.3f", fwhm));
             }
                     
-            GlitchSerie ser = currentSpagetti.getGlitchCut2(azim,fwhm);
+            GlitchSerie ser = currentspaghetti.getGlitchCut2(azim,fwhm);
             
             if (gPattFrame!=null) {
                 if (gPattFrame.getGlitchPattFrame().isVisible()) {
@@ -456,8 +456,8 @@ public class GlitchesMain {
     protected void do_mntmExportCurrentView_actionPerformed(ActionEvent e) {
         File fpng = FileUtils.fchooserSaveAsk(mainFrame, new File(userDir), null, "png");
         if (fpng!=null){
-            int w = spagettiPlot.getGraphPanel().getSize().width;
-            int h = spagettiPlot.getGraphPanel().getSize().height;
+            int w = spaghettiPlot.getGraphPanel().getSize().width;
+            int h = spaghettiPlot.getGraphPanel().getSize().height;
             String s = (String)JOptionPane.showInputDialog(
                     mainFrame,
                     "Current plot size (Width x Heigth) is "+Integer.toString(w)+" x "+Integer.toString(h)+"pixels\n"
@@ -481,9 +481,9 @@ public class GlitchesMain {
     }
     
     private void savePNG(File fpng, float factor){
-        if (!spagettiPlot.getGraphPanel().arePlottables())return;
+        if (!spaghettiPlot.getGraphPanel().arePlottables())return;
         try {
-            ImageIO.write(spagettiPlot.getGraphPanel().pintaPatterns(factor), "png", fpng);
+            ImageIO.write(spaghettiPlot.getGraphPanel().pintaPatterns(factor), "png", fpng);
         } catch (Exception ex) {
             log.warning(fpng.toString()+" error writting png file");
             return;
@@ -492,9 +492,9 @@ public class GlitchesMain {
     }
     
     protected void do_mntmExportMulticolumnFile_actionPerformed(ActionEvent e) {
-        if (currentSpagetti.getTablePatterns().getRowCount()<=0)return;
+        if (currentspaghetti.getTablePatterns().getRowCount()<=0)return;
 
-        List<SpagettiHKLserie> dss = currentSpagetti.getPlottables();
+        List<SpaghettiHKLserie> dss = currentspaghetti.getPlottables();
 
         if (dss.size()==1) {
             //normal save
@@ -536,7 +536,7 @@ public class GlitchesMain {
         try {
             out = new PrintWriter(new BufferedWriter(new FileWriter(outf,true)));            //primer escribim els comentaris
             out.println("# "+ds.getName());
-            out.println("# "+currentSpagetti.toString());
+            out.println("# "+currentspaghetti.toString());
             
             for (int i=0; i<ds.getNPoints();i++){
                 Plottable_point pp = ds.getCorrectedPoint(i,false);
@@ -570,9 +570,9 @@ public class GlitchesMain {
             out.println(header.toString());
 
             //ATENCIO les series no son continues, cal anar azimuth per azimuth i no agafar la primera com a ref
-            double azim = currentSpagetti.minAzim;
-            double tol = currentSpagetti.stepSizeAzim/2.;
-            while (azim<currentSpagetti.maxAzim) {
+            double azim = currentspaghetti.minAzim;
+            double tol = currentspaghetti.stepSizeAzim/2.;
+            while (azim<currentspaghetti.maxAzim) {
                 StringBuilder line = new StringBuilder();
                     line.append(String.format("%12.5e,",azim));    
 
@@ -585,7 +585,7 @@ public class GlitchesMain {
                     }
                 }
                 out.println(line.toString());
-                azim = azim+currentSpagetti.stepSizeAzim;
+                azim = azim+currentspaghetti.stepSizeAzim;
             }
         } catch (Exception ex) {
             ex.printStackTrace();

@@ -11,7 +11,7 @@ package com.vava33.glitches;
 
 public class Spoint extends BasicPoint{
 
-    public Spoint(double azim, double energyKeV, double intensity, SpagettiHKLserie parent) {
+    public Spoint(double azim, double energyKeV, double intensity, SpaghettiHKLserie parent) {
         super(azim,energyKeV,intensity,0,parent);
     }
 

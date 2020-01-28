@@ -18,7 +18,7 @@ import com.vava33.BasicPlotPanel.core.Plottable_point;
 import com.vava33.cellsymm.HKLrefl;
 import com.vava33.jutils.VavaLogger;
 
-public class Spagetti extends BasicDataToPlot<SpagettiHKLserie> {
+public class Spaghetti extends BasicDataToPlot<SpaghettiHKLserie> {
 
     
     String name;
@@ -28,14 +28,14 @@ public class Spagetti extends BasicDataToPlot<SpagettiHKLserie> {
     HKLrefl hkl_reflplane;
     static double stepEglitch = 0.001; //1eV
     static double minFWHM=0.005;//5eV
-    VavaLogger log = GlitchesMain.getVavaLogger("Spagetti");
+    VavaLogger log = GlitchesMain.getVavaLogger("spaghetti");
     //test:
     
-    public Spagetti() {
+    public Spaghetti() {
         super(); //ja inicia arraylists i taula
     }
     
-    public void setSpagetti(CrystalCut crys, double minE, double maxE, double minAzim, double maxAzim, double stepAzim, int maxHKLindex) {
+    public void setspaghetti(CrystalCut crys, double minE, double maxE, double minAzim, double maxAzim, double stepAzim, int maxHKLindex) {
         series.clear();
         selectedSeries.clear();
         this.name=crys.getName();
@@ -46,7 +46,7 @@ public class Spagetti extends BasicDataToPlot<SpagettiHKLserie> {
         this.stepSizeAzim=stepAzim;
         this.maxHKLindex=maxHKLindex;
         this.crystal=crys;
-        this.calcSpagetti();
+        this.calcspaghetti();
     }
     
     public double calcQmaxFromHKLmax(int hklmaxIndex) {
@@ -54,7 +54,7 @@ public class Spagetti extends BasicDataToPlot<SpagettiHKLserie> {
         return 1/(dsp*dsp);
     }
     
-    public void calcSpagetti() {
+    public void calcspaghetti() {
         List<HKLrefl> listhkl = crystal.getCell().generateHKLsCrystalFamily(calcQmaxFromHKLmax(maxHKLindex), true,true,true,true,true);
         
         crystal.getCell().calcInten(true,false);
@@ -67,7 +67,7 @@ public class Spagetti extends BasicDataToPlot<SpagettiHKLserie> {
                 hkl_reflplane = hkl;
             }
             
-            SpagettiHKLserie spHKL = new SpagettiHKLserie(hkl);
+            SpaghettiHKLserie spHKL = new SpaghettiHKLserie(hkl);
             spHKL.setToleranceContinuous(2*stepSizeAzim);
             double azim=minAzim;
             while (azim<maxAzim) {
@@ -87,9 +87,9 @@ public class Spagetti extends BasicDataToPlot<SpagettiHKLserie> {
         
         //mirem quines series coincideixen i posar un offset al nom... //TODO millorable
         for (int i=0;i<this.getNPlottables();i++) {
-            SpagettiHKLserie s = this.getSerie(i);
+            SpaghettiHKLserie s = this.getSerie(i);
             for (int j=i+1;j<this.getNPlottables();j++) {
-                SpagettiHKLserie s2 = this.getSerie(j);                
+                SpaghettiHKLserie s2 = this.getSerie(j);                
                 if (s.isEqualTo(s2)) {
                     s2.setName("            "+s2.getName());
                 }
@@ -120,7 +120,7 @@ public class Spagetti extends BasicDataToPlot<SpagettiHKLserie> {
             currE=currE+stepEglitch;
         }
         
-        //Aquest criteri es bo per tenir un unic punt azimutal (agafa half the stepsize de l'spagetti, per tant una seria hkl nomes estarà un cop dins min-max)
+        //Aquest criteri es bo per tenir un unic punt azimutal (agafa half the stepsize de l'spaghetti, per tant una seria hkl nomes estarà un cop dins min-max)
         double minAz=azimValue-stepSizeAzim/2.;
         double maxAz=azimValue+stepSizeAzim/2.;
 
@@ -128,8 +128,8 @@ public class Spagetti extends BasicDataToPlot<SpagettiHKLserie> {
         double fwhmKEV=minFWHM; //default TODO posar de parametre?
         
         //ser ha de ser per tot el rang energetic, el fem segons azimDelta
-        for (SpagettiHKLserie hkl :this.series) {
-            //he de mirar cada spagetti serie a les azim [-delta, azim, +delta] quina E tenen i poblar el vector ser
+        for (SpaghettiHKLserie hkl :this.series) {
+            //he de mirar cada spaghetti serie a les azim [-delta, azim, +delta] quina E tenen i poblar el vector ser
             for (Plottable_point sp:hkl.getPoints()) {
                 double az = sp.getX();
                 if (az<minAz)continue;

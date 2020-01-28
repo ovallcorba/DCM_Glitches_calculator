@@ -11,11 +11,11 @@ import com.vava33.BasicPlotPanel.BasicPoint;
 import com.vava33.BasicPlotPanel.BasicSerie;
 import com.vava33.cellsymm.HKLrefl;
 
-public class SpagettiHKLserie extends BasicSerie<BasicPoint>{
+public class SpaghettiHKLserie extends BasicSerie<BasicPoint>{
     
     private HKLrefl hkl;
 
-    public SpagettiHKLserie(HKLrefl hkl) {
+    public SpaghettiHKLserie(HKLrefl hkl) {
         super(hkl.toString());
         this.hkl = hkl;
     }
@@ -24,7 +24,7 @@ public class SpagettiHKLserie extends BasicSerie<BasicPoint>{
         return hkl;
     }
 
-    public boolean isEqualTo(SpagettiHKLserie otherSpaghettiSerie) {
+    public boolean isEqualTo(SpaghettiHKLserie otherSpaghettiSerie) {
         boolean iguals = true;
         for (int i=0; i<this.getNPoints(); i++) {
             if (this.getRawPoint(i).compareTo(otherSpaghettiSerie.getRawPoint(i))!=0) {

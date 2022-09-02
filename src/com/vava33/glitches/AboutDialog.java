@@ -28,10 +28,6 @@ public class AboutDialog {
     private JLabel lblLogoalba;
     private JTextArea txtrNuclearInstrumentsAnd;
 
-    
-    /**
-     * Create the dialog.
-     */
     public AboutDialog(JFrame parent) {
     	this.aboutDialog = new JDialog(parent,"About this program",true);
     	this.contentPanel = new JPanel();
